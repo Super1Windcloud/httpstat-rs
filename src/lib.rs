@@ -46,9 +46,9 @@ pub fn run(cli: Cli) -> Result<ExitCode, String> {
     let violations = slo::evaluate_slos(measurement.timings, &slo_checks);
     let rendered = render::render_output(&cli, &measurement, &violations, disable_color)?;
 
-    println!("{rendered}");
+    println!("{}", rendered.display);
     if let Some(path) = &cli.save {
-        fs::write(path, &rendered)
+        fs::write(path, &rendered.save_contents)
             .map_err(|err| format!("failed to save {}: {err}", path.display()))?;
     }
 

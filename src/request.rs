@@ -110,6 +110,7 @@ pub fn perform_request(cli: &Cli) -> Result<Measurement, String> {
         local_port: easy.local_port().map_err(to_string)?,
         downloaded_bytes: easy.download_size().map_err(to_string)?.round() as u64,
         uploaded_bytes: easy.upload_size().map_err(to_string)?.round() as u64,
+        response_body: sink,
         timings,
         diagnostics,
     })

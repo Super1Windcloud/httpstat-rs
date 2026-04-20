@@ -29,10 +29,14 @@ pub struct RequestSummary<'a> {
 
 #[derive(Debug, Serialize)]
 pub struct ResponseSummary {
+    pub status_line: String,
     pub status_code: u32,
     pub http_version: String,
     pub remote_ip: Option<String>,
+    pub remote_port: u16,
     pub local_ip: Option<String>,
+    pub local_port: u16,
+    pub headers: Vec<String>,
     pub downloaded_bytes: u64,
     pub uploaded_bytes: u64,
 }
@@ -69,6 +73,7 @@ pub struct Measurement {
     pub local_port: u16,
     pub downloaded_bytes: u64,
     pub uploaded_bytes: u64,
+    pub response_body: Vec<u8>,
     pub timings: PhaseDurations,
     pub diagnostics: Vec<Diagnostic>,
 }

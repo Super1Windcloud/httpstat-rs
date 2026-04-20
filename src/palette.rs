@@ -17,10 +17,6 @@ impl Palette {
         }
     }
 
-    pub fn bold(&self, text: &str) -> String {
-        self.wrap("1", text)
-    }
-
     pub fn dim(&self, text: &str) -> String {
         self.wrap("2", text)
     }
@@ -31,10 +27,6 @@ impl Palette {
 
     pub fn green(&self, text: &str) -> String {
         self.wrap("32", text)
-    }
-
-    pub fn yellow(&self, text: &str) -> String {
-        self.wrap("33", text)
     }
 
     pub fn blue(&self, text: &str) -> String {
