@@ -3,6 +3,8 @@
 `httpstat-rs` is a Rust CLI inspired by [`reorx/httpstat`](https://github.com/reorx/httpstat).
 It measures end-to-end HTTP timings with a compact terminal view and stable machine-readable output.
 
+Repository: <https://github.com/Super1Windcloud/httpstat-rs>
+
 ## Features
 
 - Compact terminal output for `DNS`, `TCP`, `TLS`, `Server`, `Transfer`, and `Total`
