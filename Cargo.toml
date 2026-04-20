@@ -1,5 +1,5 @@
 [package]
-name = "httpstat-rs"
+name = "httpstat"
 version = "0.1.0"
 edition = "2024"
 description = "A curl-powered HTTP timing profiler with compact terminal output, JSON output, and SLO checks."
