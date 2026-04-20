@@ -15,6 +15,9 @@ pub struct Cli {
     #[arg(long, value_enum, default_value_t = OutputFormat::Human)]
     pub format: OutputFormat,
 
+    #[arg(long, value_enum, default_value_t = ColorMode::Auto)]
+    pub color: ColorMode,
+
     #[arg(long, help = "Save the rendered result to a file")]
     pub save: Option<PathBuf>,
 
@@ -61,4 +64,11 @@ pub enum OutputFormat {
     Human,
     Json,
     Jsonl,
+}
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq, ValueEnum)]
+pub enum ColorMode {
+    Auto,
+    Always,
+    Never,
 }

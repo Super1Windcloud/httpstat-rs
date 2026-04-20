@@ -37,14 +37,16 @@ pub fn perform_request(cli: &Cli) -> Result<Measurement, String> {
 
     let mut sink = Vec::new();
     let mut status_line = None::<String>;
+    let mut response_headers = Vec::<String>::new();
     let mut transfer = easy.transfer();
     transfer
         .header_function(|header| {
-            if status_line.is_none() {
-                let line = String::from_utf8_lossy(header).trim().to_string();
-                if line.starts_with("HTTP/") {
-                    status_line = Some(line);
-                }
+            let line = String::from_utf8_lossy(header).trim().to_string();
+            if line.starts_with("HTTP/") {
+                status_line = Some(line);
+                response_headers.clear();
+            } else if !line.is_empty() && status_line.is_some() {
+                response_headers.push(line);
             }
             true
         })
@@ -97,9 +99,15 @@ pub fn perform_request(cli: &Cli) -> Result<Measurement, String> {
 
     Ok(Measurement {
         status_code: easy.response_code().map_err(to_string)?,
+        status_line: status_line
+            .clone()
+            .unwrap_or_else(|| format!("{} {}", parse_http_version(None), 0)),
         http_version: parse_http_version(status_line.as_deref()),
+        response_headers,
         remote_ip: easy.primary_ip().ok().flatten().map(ToOwned::to_owned),
+        remote_port: easy.primary_port().map_err(to_string)?,
         local_ip: easy.local_ip().ok().flatten().map(ToOwned::to_owned),
+        local_port: easy.local_port().map_err(to_string)?,
         downloaded_bytes: easy.download_size().map_err(to_string)?.round() as u64,
         uploaded_bytes: easy.upload_size().map_err(to_string)?.round() as u64,
         timings,

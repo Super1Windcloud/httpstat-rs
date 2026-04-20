@@ -40,12 +40,4 @@ impl Palette {
     pub fn blue(&self, text: &str) -> String {
         self.wrap("34", text)
     }
-
-    pub fn magenta(&self, text: &str) -> String {
-        self.wrap("35", text)
-    }
-
-    pub fn cyan(&self, text: &str) -> String {
-        self.wrap("36", text)
-    }
 }

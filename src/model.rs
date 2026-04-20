@@ -61,8 +61,12 @@ pub struct SloViolation {
 pub struct Measurement {
     pub status_code: u32,
     pub http_version: String,
+    pub status_line: String,
+    pub response_headers: Vec<String>,
     pub remote_ip: Option<String>,
+    pub remote_port: u16,
     pub local_ip: Option<String>,
+    pub local_port: u16,
     pub downloaded_bytes: u64,
     pub uploaded_bytes: u64,
     pub timings: PhaseDurations,

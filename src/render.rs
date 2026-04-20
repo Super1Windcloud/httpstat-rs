@@ -6,7 +6,6 @@ use crate::model::{
     JsonResult, Measurement, RequestSummary, ResponseSummary, SloReport, SloViolation,
 };
 use crate::palette::Palette;
-use crate::slo::MetricKey;
 
 pub fn render_output(
     cli: &Cli,
@@ -53,59 +52,32 @@ fn render_human(
     let mut out = String::new();
     let palette = Palette::new(disable_color);
 
-    let status = if measurement.status_code >= 400 {
-        palette.red(&measurement.status_code.to_string())
+    let status_line = if measurement.status_code >= 400 {
+        palette.red(&measurement.status_line)
     } else {
-        palette.green(&measurement.status_code.to_string())
+        palette.green(&measurement.status_line)
     };
     let _ = writeln!(
         out,
-        "{} {} {}",
-        palette.bold(&cli.method),
-        palette.cyan(&cli.url),
-        status
-    );
-
-    let _ = writeln!(
-        out,
-        "{}  {}  {}",
-        palette.dim(&measurement.http_version),
+        "{}",
         palette.dim(&format!(
-            "remote={}",
-            measurement.remote_ip.as_deref().unwrap_or("unknown")
-        )),
-        palette.dim(&format!("bytes={}", measurement.downloaded_bytes))
+            "Connected to {}:{}",
+            measurement.remote_ip.as_deref().unwrap_or("unknown"),
+            measurement.remote_port
+        ))
     );
     let _ = writeln!(out);
-
-    let max_ms = measurement.timings.total_ms.max(1.0);
-    for key in [
-        MetricKey::Dns,
-        MetricKey::Connect,
-        MetricKey::Tls,
-        MetricKey::Server,
-        MetricKey::Transfer,
-        MetricKey::Total,
-    ] {
-        let value = measurement.timings.metric(key);
-        let width = ((value / max_ms) * 28.0).round().clamp(1.0, 28.0) as usize;
-        let bar = "█".repeat(width);
-        let painted_bar = match key {
-            MetricKey::Dns => palette.blue(&bar),
-            MetricKey::Connect => palette.cyan(&bar),
-            MetricKey::Tls => palette.magenta(&bar),
-            MetricKey::Server => palette.yellow(&bar),
-            MetricKey::Transfer => palette.green(&bar),
-            MetricKey::Total => palette.bold(&bar),
-        };
-        let _ = writeln!(
-            out,
-            "{:<18} {:>8.2} ms  {}",
-            key.label(),
-            value,
-            painted_bar
-        );
+    let _ = writeln!(
+        out,
+        "{}",
+        status_line
+    );
+    for header in &measurement.response_headers {
+        let _ = writeln!(out, "{header}");
     }
+    let _ = writeln!(out);
+
+    write_httpstat_timeline(&mut out, cli, measurement, &palette);
 
     if !measurement.diagnostics.is_empty() {
         let _ = writeln!(out);
@@ -133,4 +105,108 @@ fn render_human(
     }
 
     out.trim_end().to_string()
+}
+
+fn write_httpstat_timeline(
+    out: &mut String,
+    cli: &Cli,
+    measurement: &Measurement,
+    palette: &Palette,
+) {
+    let has_tls = cli.url.starts_with("https://");
+    let dns = ms(measurement.timings.dns_ms);
+    let tcp = ms(measurement.timings.connect_ms);
+    let tls = ms(measurement.timings.tls_ms);
+    let server = ms(measurement.timings.server_ms);
+    let transfer = ms(measurement.timings.transfer_ms);
+    let connect = ms(measurement.timings.dns_ms + measurement.timings.connect_ms);
+    let pretransfer = ms(
+        measurement.timings.dns_ms + measurement.timings.connect_ms + measurement.timings.tls_ms,
+    );
+    let starttransfer = ms(measurement.timings.total_ms - measurement.timings.transfer_ms);
+    let total = ms(measurement.timings.total_ms);
+
+    if has_tls {
+        let _ = writeln!(
+            out,
+            "  DNS Lookup   TCP Connection   TLS Handshake   Server Processing   Content Transfer"
+        );
+        let _ = writeln!(
+            out,
+            "{}",
+            palette.bold(&format!(
+                "[{:>10}  |{:>14}  |{:>13}  |{:>19}  |{:>15}  ]",
+                format!("{dns}ms"),
+                format!("{tcp}ms"),
+                format!("{tls}ms"),
+                format!("{server}ms"),
+                format!("{transfer}ms")
+            ))
+        );
+        let _ = writeln!(
+            out,
+            "            |                |               |                   |                  |"
+        );
+        let _ = writeln!(
+            out,
+            "   {:<21}|               |                   |                  |",
+            format!("namelookup:{dns}ms")
+        );
+        let _ = writeln!(
+            out,
+            "                       {:<14}|                   |                  |",
+            format!("connect:{connect}ms")
+        );
+        let _ = writeln!(
+            out,
+            "                                   {:<18}|                  |",
+            format!("pretransfer:{pretransfer}ms")
+        );
+        let _ = writeln!(
+            out,
+            "                                                     {:<19}|",
+            format!("starttransfer:{starttransfer}ms")
+        );
+        let _ = writeln!(out, "                                                                                total:{total}ms");
+    } else {
+        let _ = writeln!(
+            out,
+            "  DNS Lookup   TCP Connection   Server Processing   Content Transfer"
+        );
+        let _ = writeln!(
+            out,
+            "{}",
+            palette.bold(&format!(
+                "[{:>10}  |{:>14}  |{:>19}  |{:>15}  ]",
+                format!("{dns}ms"),
+                format!("{tcp}ms"),
+                format!("{server}ms"),
+                format!("{transfer}ms")
+            ))
+        );
+        let _ = writeln!(
+            out,
+            "            |                |                   |                  |"
+        );
+        let _ = writeln!(
+            out,
+            "   {:<21}|                   |                  |",
+            format!("namelookup:{dns}ms")
+        );
+        let _ = writeln!(
+            out,
+            "                       {:<14}|                  |",
+            format!("connect:{connect}ms")
+        );
+        let _ = writeln!(
+            out,
+            "                                       {:<18}|",
+            format!("starttransfer:{starttransfer}ms")
+        );
+        let _ = writeln!(out, "                                                          total:{total}ms");
+    }
+}
+
+fn ms(value: f64) -> u64 {
+    value.round().max(0.0) as u64
 }
