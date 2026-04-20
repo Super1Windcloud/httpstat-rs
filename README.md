@@ -36,6 +36,23 @@ httpstat-rs https://example.com --proxy http://127.0.0.1:8080
 httpstat-rs https://example.com --save result.json
 ```
 
+## Example Terminal Output
+
+```text
+GET https://example.com 200
+HTTP/1.1  remote=198.18.0.145  bytes=528
+
+DNS Lookup            11.02 ms  █
+TCP Connect            0.67 ms  █
+TLS Handshake        288.61 ms  █████████████████████
+Server Work           86.80 ms  ██████
+Content Transfer       0.06 ms  █
+Total                387.15 ms  ████████████████████████████
+
+Diagnostics
+[info] TLS Handshake dominates the request path at 75% of total time.
+```
+
 ## Output Formats
 
 `--format human` is the default and prints a concise colored timing summary when color is enabled.
