@@ -1,0 +1,17 @@
+[package]
+name = "httpstat-rs"
+version = "0.1.0"
+edition = "2024"
+description = "A curl-powered HTTP timing profiler with compact terminal output, JSON output, and SLO checks."
+license = "MIT"
+readme = "README.md"
+documentation = "https://docs.rs/httpstat-rs"
+keywords = ["http", "curl", "latency", "timing", "cli"]
+categories = ["command-line-utilities", "network-programming"]
+include = ["src/**/*", "Cargo.toml", "Cargo.lock", "README.md", "LICENSE"]
+
+[dependencies]
+clap = { version = "4.5.39", features = ["derive"] }
+curl = "0.4.49"
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.145"
